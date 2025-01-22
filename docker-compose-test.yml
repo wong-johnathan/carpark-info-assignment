@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app_test:
+    build: 
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - NODE_ENV=test
+      - DB_TEST_HOST=db_test
+      - DB_TEST_PORT=5432
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db_test
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  db_test:
+    image: postgres:13
+    container_name: express_db_test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: express_db_test
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_test_data:

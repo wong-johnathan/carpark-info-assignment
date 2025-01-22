@@ -1,0 +1,531 @@
+openapi: 3.0.0
+info:
+  title: Carpark API
+  description: API for managing car parks, user authentication, and user favourites
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      description: Create a new user account with name, age, email, and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                age:
+                  type: integer
+                  example: 25
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+              required:
+                - name
+                - age
+                - email
+                - password
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Account created successfully
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: John Doe
+                      age:
+                        type: integer
+                        example: 25
+                      email:
+                        type: string
+                        example: john.doe@example.com
+        '400':
+          description: Bad request (e.g., email already exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email already exists
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error creating account
+                  error:
+                    type: string
+                    example: Detailed error message
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login a user
+      description: Authenticate a user with email and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: John Doe
+                      age:
+                        type: integer
+                        example: 25
+                      email:
+                        type: string
+                        example: john.doe@example.com
+        '400':
+          description: Bad request (e.g., invalid email or password)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid email or password
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error logging in
+                  error:
+                    type: string
+                    example: Detailed error message
+  /carparks:
+    get:
+      tags:
+        - Carpark
+      summary: Get a list of car parks
+      description: Retrieve a paginated list of car parks with optional filters.
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            default: 10
+        - name: free_parking
+          in: query
+          description: Filter by free parking availability
+          schema:
+            type: boolean
+        - name: night_parking
+          in: query
+          description: Filter by night parking availability
+          schema:
+            type: boolean
+        - name: gantry_height
+          in: query
+          description: Filter by minimum gantry height
+          schema:
+            type: number
+      responses:
+        '200':
+          description: List of car parks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 100
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Carpark'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error fetching car parks
+                  error:
+                    type: string
+                    example: Detailed error message
+  /carparks/{car_park_no}:
+    get:
+      tags:
+        - Carpark
+      summary: Get a car park by ID
+      description: Retrieve a specific car park by its ID.
+      parameters:
+        - name: car_park_no
+          in: path
+          required: true
+          description: The ID of the car park
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Car park retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Carpark'
+        '404':
+          description: Car park not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car park not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error fetching car park
+                  error:
+                    type: string
+                    example: Detailed error message
+  /favourites:
+    post:
+      tags:
+        - Favourites
+      summary: Add a car park to favourites
+      description: Add a car park to the user's list of favourites.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                carparkId:
+                  type: string
+                  example: "AM81"
+              required:
+                - carparkId
+      responses:
+        '201':
+          description: Car park added to favourites successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car park added to favorites
+                  favourite:
+                    $ref: '#/components/schemas/Favourite'
+        '400':
+          description: Bad request (e.g., car park already favourited)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car park already favorited
+        '404':
+          description: Car park not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car park not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error adding car park to favorites
+                  error:
+                    type: string
+                    example: Detailed error message
+    delete:
+      tags:
+        - Favourites
+      summary: Remove a car park from favourites
+      description: Remove a car park from the user's list of favourites.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                carparkId:
+                  type: string
+                  example: "AM81"
+              required:
+                - carparkId
+      responses:
+        '200':
+          description: Car park removed from favourites successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car park removed from favorites
+        '404':
+          description: Car park not found in favourites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Car park not found in favorites
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error removing car park from favorites
+                  error:
+                    type: string
+                    example: Detailed error message
+    get:
+      tags:
+        - Favourites
+      summary: Get user's favourite car parks
+      description: Retrieve a list of car parks favourited by the user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Favourite car parks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Favourite car parks retrieved successfully
+                  favourites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Carpark'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error retrieving favorite car parks
+                  error:
+                    type: string
+                    example: Detailed error message
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: John Doe
+        age:
+          type: integer
+          example: 25
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          format: password
+          example: hashedpassword123
+      required:
+        - id
+        - name
+        - age
+        - email
+        - password
+    Carpark:
+      type: object
+      properties:
+        car_park_no:
+          type: string
+          example: "AM81"
+        address:
+          type: string
+          example: "123 Main St"
+        x_coord:
+          type: number
+          example: 1.2345
+        y_coord:
+          type: number
+          example: 6.7890
+        car_park_type:
+          type: string
+          example: "Surface"
+        type_of_parking_system:
+          type: string
+          example: "Electronic"
+        short_term_parking:
+          type: string
+          example: "YES"
+        free_parking:
+          type: string
+          example: "NO"
+        night_parking:
+          type: string
+          example: "YES"
+        car_park_decks:
+          type: integer
+          example: 2
+        gantry_height:
+          type: number
+          example: 2.5
+        car_park_basement:
+          type: string
+          example: "NO"
+      required:
+        - car_park_no
+        - address
+        - x_coord
+        - y_coord
+        - car_park_type
+        - type_of_parking_system
+        - short_term_parking
+        - free_parking
+        - night_parking
+        - car_park_decks
+        - gantry_height
+        - car_park_basement
+    Favourite:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 1
+        carparkId:
+          type: string
+          example: "AM81"
+      required:
+        - userId
+        - carparkId
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
